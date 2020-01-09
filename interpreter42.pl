@@ -24,10 +24,10 @@ To be called like this:
 run(InputFile,OutputFile):-
 	tokenize(InputFile,Program),
 	parse(ParseTree,Program,[]),
-	%evaluate(ParseTree,[],VariablesOut), 
+	evaluate(ParseTree,[],VariablesOut), 
 
 	%write_to_file(OutputFile,ParseTree,VariablesOut).
-	write_to_file(OutputFile,ParseTree,[a = 0.0]).
+	write_to_file(OutputFile,ParseTree,VariablesOut).
 
 /***
 parse(-ParseTree)-->
@@ -94,7 +94,6 @@ ident(ident(A)) --> [A].
 
 
 
-
 /***
 evaluate(+ParseTree,+VariablesIn,-VariablesOut):-
 	Evaluates a parse-tree and returns the state of the program
@@ -102,4 +101,66 @@ evaluate(+ParseTree,+VariablesIn,-VariablesOut):-
 	the form [var = value, ...].
 ***/
 
-/* WRITE YOUR CODE FOR THE EVALUATOR HERE */
+
+
+evaluate(assignment(Id,AssignmentOperator,Expression,Semicolon),VarsIn,[VarOut=ValOut]):-
+	evaluate(Id,VarsIn,VarOut),
+	evaluate(Expression,VarsIn,ValOut).
+
+evaluate(expression(Term),VarsIn,VarsOut):-
+	evaluate(Term,VarsIn,VarsOut).
+
+evaluate(expression(Term,Operator,Expression),VarsIn,Out):-
+	Operator=sub_op,
+	evaluate(Term,VarsIn,ValueFirst),
+	evaluate(Expression,VarsIn,ValueSecond),
+	Out=ValueFirst - ValueSecond.
+
+evaluate(expression(Term,Operator,Expression),VarsIn,Out):-
+	Operator=add_op,
+	evaluate(Term,VarsIn,ValueFirst),
+	evaluate(Expression,VarsIn,ValueSecond),
+	Out=ValueFirst + ValueSecond.
+
+evaluate(term(Factor),VarsIn,VarsOut):-
+	evaluate(Factor,VarsIn,VarsOut).
+
+evaluate(term(Factor, Operator, Term),VarsIn,Out):-
+	Operator = mult_op,
+	evaluate(Factor,VarsIn,ValueFirst),
+	evaluate(Term,VarsIn,ValueSecond),
+	Out=ValueFirst * ValueSecond.
+
+evaluate(term(Factor, Operator, Term),VarsIn,Out):-
+	Operator = div_op,
+	evaluate(Factor,VarsIn,ValueFirst),
+	evaluate(Term,VarsIn,ValueSecond),
+	Out=ValueFirst / ValueSecond.
+
+evaluate(factor(Int),VarsIn,VarsOut):-
+	evaluate(Int,VarsIn,VarsOut).
+
+evaluate(factor(LeftParen, Expression, RightParen),VarsIn,VarsOut):-
+	evaluate(Expression,VarsIn,VarsOut).
+
+evaluate(int(Int),VarsIn,Int).
+evaluate(ident(Id),VarsIn,Id).
+
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
