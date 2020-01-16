@@ -52,7 +52,7 @@ statements(statements(Assignment,Statements)) -->
 	assignment(Assignment),
 	statements(Statements).
 
-assignments(assignments(Id,AssignOperator,Expr,Semicolon)) -->
+assignment(assignment(Id,AssignOperator,Expr,Semicolon)) -->
 	ident(Id), 
 	assign_op(AssignOperator),
 	expression(Expr),
