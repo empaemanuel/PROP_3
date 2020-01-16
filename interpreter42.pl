@@ -24,10 +24,10 @@ To be called like this:
 run(InputFile,OutputFile):-
 	tokenize(InputFile,Program),
 	parse(ParseTree,Program,[]),
-	%evaluate(ParseTree,[],VariablesOut), 
+	evaluate(ParseTree,[],VariablesOut), 
 
-	%write_to_file(OutputFile,ParseTree,VariablesOut).
-	write_to_file(OutputFile,ParseTree,[a=1111]).
+	write_to_file(OutputFile,ParseTree,VariablesOut).
+	%write_to_file(OutputFile,ParseTree,[a=1111]).
 
 /***
 parse(-ParseTree)-->
@@ -52,7 +52,7 @@ statements(statements(Assignment,Statements)) -->
 	assignment(Assignment),
 	statements(Statements).
 
-assignments(assignments(Id,AssignOperator,Expr,Semicolon)) -->
+assignment(assignment(Id,AssignOperator,Expr,Semicolon)) -->
 	ident(Id), 
 	assign_op(AssignOperator),
 	expression(Expr),
@@ -116,9 +116,17 @@ evaluate(+ParseTree,+VariablesIn,-VariablesOut):-
 	the form [var = value, ...].
 ***/
 
+evaluate(block(LeftCurly,Statements,RightCurly),VarsIn,VarsOut):-
+	evaluate(Statements,VarsIn,VarsOut).
 
+evaluate(statements(Assignment, Statements),VarsIn,VarsOut):-
+	evaluate(Assignment,VarsIn,Out),
+	evaluate(Statements,Out,VarsOut).
 
-evaluate(assignment(Id,AssignmentOperator,Expression,Semicolon),VarsIn,[VarOut=ValOut]):-
+evaluate(statements(Assignment),VarsIn,VarsOut):-
+	evaluate(Assignment,VarsIn,VarsOut).
+
+evaluate(assignment(Id,AssignmentOperator,Expression,Semicolon),VarsIn,[(VarOut=ValOut)|VarsIn]):-
 	evaluate(Id,VarsIn,VarOut),
 	evaluate(Expression,VarsIn,ValOut).
 
