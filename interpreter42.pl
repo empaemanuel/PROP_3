@@ -24,10 +24,10 @@ To be called like this:
 run(InputFile,OutputFile):-
 	tokenize(InputFile,Program),
 	parse(ParseTree,Program,[]),
-	evaluate(ParseTree,[],VariablesOut), 
+	%evaluate(ParseTree,[],VariablesOut), 
 
 	%write_to_file(OutputFile,ParseTree,VariablesOut).
-	write_to_file(OutputFile,ParseTree,VariablesOut).
+	write_to_file(OutputFile,ParseTree,[a=1111]).
 
 /***
 parse(-ParseTree)-->
@@ -40,11 +40,24 @@ The parser should take a list of lexemes/tokens as input, and from
 that list of lexemes/tokens create a parse tree as output.
 **/
 
-parse(assignment(Id,AssignOperator,Expr,Semicolon)) -->
+parse(block(LeftCurly,Statements,RightCurly))-->
+	left_curly(LeftCurly),
+	statements(Statements),
+	right_curly(RightCurly).
+
+statements(statements(Assignment))-->
+	assignment(Assignment).
+
+statements(statements(Assignment,Statements)) -->
+	assignment(Assignment),
+	statements(Statements).
+
+assignments(assignments(Id,AssignOperator,Expr,Semicolon)) -->
 	ident(Id), 
 	assign_op(AssignOperator),
 	expression(Expr),
 	semicolon(Semicolon).
+
 
 expression(expression(Term)) -->
 	term(Term).
@@ -87,6 +100,8 @@ div_op(div_op)-->['/'].
 assign_op(assign_op) --> [=].
 left_paren(left_paren) --> ['('].
 right_paren(right_paren) --> [')'].
+left_curly(left_curly)--> ['{'].
+right_curly(right_curly)--> ['}'].
 semicolon(semicolon)-->[;].
 
 int(int(I))-->[I].
