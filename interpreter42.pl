@@ -143,25 +143,44 @@ evaluate(Expression,Vars,Value):-
 	Expression=expression(Term),
 	evaluate(Term,Vars,Value).
 
-evaluate(Expression,Vars,Sum):-
-	Expression=expression(Term,sub_op,RecExpression),
+evaluate(Expression,Vars,Result):-
+	Expression=expression(Term,Operator,RecExpression),
 	evaluate(Term,Vars,TermValue),
 	evaluate(RecExpression,Vars,ExpressionValue),
-	Sum=TermValue-ExpressionValue.
+	calc(TermValue,Operator,ExpressionValue,Result).
 
-evaluate(Term,_,X):-
-	Term=term(factor(int(X))).
+evaluate(Term,Vars,Value):-
+	Term=term(Factor),
+	evaluate(Factor,Vars,Value).
 
-evaluate(Term,[],0):-
-	Term=term(factor(ident(Id))).
+evaluate(Term,Vars,Result):-
+	Term=term(Factor,Operator,RecTerm),
+	evaluate(Factor,Vars,FactorValue),
+	evaluate(RecTerm,Vars,TermValue),
+	calc(FactorValue,Operator,TermValue,Result).
 
-evaluate(Term,[H|VarsIn],X):-
-	Term=term(factor(ident(Id))),
+evaluate(Factor,Vars,Result):-
+	Factor=factor(_,Expression,_),
+	evaluate(Expression,Vars,Result).
+
+evaluate(Factor,_,X):-
+	Factor=factor(int(X)).
+
+evaluate(Factor,[],0):-
+	Factor=factor(ident(Id)).
+
+evaluate(Factor,[H|VarsIn],X):-
+	Factor=factor(ident(Id)),
 	H=(Id=X).
 
-evaluate(Term,[_|VarsIn],X):-
-	Term=term(factor(ident(Id))),
-	evaluate(Term,VarsIn,X).
+evaluate(Factor,[_|VarsIn],X):-
+	Factor=factor(ident(Id)),
+	evaluate(Factor,VarsIn,X).
+
+calc(A,sub_op,B,A-B).
+calc(A,add_op,B,A+B).
+calc(A,div_op,B,A/B).
+calc(A,mult_op,B,A*B).
 
 
 /*
