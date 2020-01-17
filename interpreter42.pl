@@ -24,10 +24,10 @@ To be called like this:
 run(InputFile,OutputFile):-
 	tokenize(InputFile,Program),
 	parse(ParseTree,Program,[]),
-	evaluate(ParseTree,[],VariablesOut), 
+	%evaluate(ParseTree,[],VariablesOut), 
 
-	write_to_file(OutputFile,ParseTree,VariablesOut).
-	%write_to_file(OutputFile,ParseTree,[a=1111]).
+	%write_to_file(OutputFile,ParseTree,VariablesOut).
+	write_to_file(OutputFile,ParseTree,[a=1111]).
 
 /***
 parse(-ParseTree)-->
@@ -40,12 +40,17 @@ The parser should take a list of lexemes/tokens as input, and from
 that list of lexemes/tokens create a parse tree as output.
 **/
 
+
 parse(block(LeftCurly,Statements,RightCurly))-->
 	left_curly(LeftCurly),
 	statements(Statements),
 	right_curly(RightCurly).
 
-statements(statements(Assignment))-->
+parse(block(LeftCurly,RightCurly))-->
+	left_curly(LeftCurly),
+	right_curly(RightCurly).
+
+statements(statements(Assignment,statements))-->
 	assignment(Assignment).
 
 statements(statements(Assignment,Statements)) -->
@@ -57,7 +62,6 @@ assignment(assignment(Id,AssignOperator,Expr,Semicolon)) -->
 	assign_op(AssignOperator),
 	expression(Expr),
 	semicolon(Semicolon).
-
 
 expression(expression(Term)) -->
 	term(Term).
@@ -88,6 +92,9 @@ term(term(Factor,DivOp,Term))-->
 factor(factor(Int))-->
 	int(Int).
 
+factor(factor(Id))-->
+	ident(Id).
+
 factor(factor(LeftParen,Expression,RightParen))-->
 	left_paren(LeftParen),
 	expression(Expression),
@@ -104,9 +111,8 @@ left_curly(left_curly)--> ['{'].
 right_curly(right_curly)--> ['}'].
 semicolon(semicolon)-->[;].
 
-int(int(I))-->[I].
-ident(ident(A)) --> [A].
-
+ident(ident(Ident))-->[Ident].
+int(int(Int))-->[Int],{number(Int)}.
 
 
 /***
@@ -163,13 +169,21 @@ evaluate(term(Factor, Operator, Term),VarsIn,Out):-
 evaluate(factor(Int),VarsIn,VarsOut):-
 	evaluate(Int,VarsIn,VarsOut).
 
+evaluate(factor(Id),VarsIn,Out):-
+	find(Id,VarsIn,Out).
+
 evaluate(factor(LeftParen, Expression, RightParen),VarsIn,VarsOut):-
 	evaluate(Expression,VarsIn,VarsOut).
 
 evaluate(int(Int),VarsIn,Int).
-evaluate(ident(Id),VarsIn,Id).
+evaluate(ident(Id),VarsIn,Out):-
+	find(Id,VarsIn,Out).
 
-
+find(Id,[],Id).
+find(Id,[H|T],X):-
+	H=[Id=X].
+find(Id,[_|T],X):-
+	find(Id,T,X).
 	
 	
 
