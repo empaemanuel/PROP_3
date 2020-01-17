@@ -24,10 +24,10 @@ To be called like this:
 run(InputFile,OutputFile):-
 	tokenize(InputFile,Program),
 	parse(ParseTree,Program,[]),
-	%evaluate(ParseTree,[],VariablesOut), 
+	evaluate(ParseTree,[],VariablesOut), 
 
-	%write_to_file(OutputFile,ParseTree,VariablesOut).
-	write_to_file(OutputFile,ParseTree,[a=1111]).
+	write_to_file(OutputFile,ParseTree,VariablesOut).
+	%write_to_file(OutputFile,ParseTree,[a=1111]).
 
 /***
 parse(-ParseTree)-->
@@ -122,73 +122,77 @@ evaluate(+ParseTree,+VariablesIn,-VariablesOut):-
 	the form [var = value, ...].
 ***/
 
-evaluate(block(LeftCurly,Statements,RightCurly),VarsIn,VarsOut):-
+evaluate(ParseTree,VarsIn,VarsOut):-
+	ParseTree=block(_,Statements,_),
+	VarsIn=[],
 	evaluate(Statements,VarsIn,VarsOut).
 
-evaluate(statements(Assignment, Statements),VarsIn,VarsOut):-
-	evaluate(Assignment,VarsIn,Out),
-	evaluate(Statements,Out,VarsOut).
+evaluate(Statement, VarsIn, VarsOut):-
+	Statement=statements(Assignment, RecStatement),
+	evaluate(Assignment, VarsIn, NewAssignments),
+	evaluate(RecStatement, NewAssignments, VarsOut).
 
-evaluate(statements(Assignment),VarsIn,VarsOut):-
-	evaluate(Assignment,VarsIn,VarsOut).
+evaluate(Statement,Vars,Vars):-
+	Statement=statements.
 
-evaluate(assignment(Id,AssignmentOperator,Expression,Semicolon),VarsIn,[(VarOut=ValOut)|VarsIn]):-
-	evaluate(Id,VarsIn,VarOut),
-	evaluate(Expression,VarsIn,ValOut).
+evaluate(Assignment,VarsIn,[(Id=Value)|VarsIn]):-
+	Assignment=assignment(ident(Id),_,Expression,_),
+	evaluate(Expression, VarsIn, Value).
 
-evaluate(expression(Term),VarsIn,VarsOut):-
-	evaluate(Term,VarsIn,VarsOut).
+evaluate(Expression,Vars,Value):-
+	Expression=expression(Term),
+	evaluate(Term,Vars,Value).
 
-evaluate(expression(Term,Operator,Expression),VarsIn,Out):-
-	Operator=sub_op,
-	evaluate(Term,VarsIn,ValueFirst),
-	evaluate(Expression,VarsIn,ValueSecond),
-	Out=ValueFirst - ValueSecond.
+evaluate(Expression,Vars,Result):-
+	Expression=expression(Term,Operator,RecExpression),
+	evaluate(Term,Vars,TermValue),
+	evaluate(RecExpression,Vars,ExpressionValue),
+	calc(TermValue,Operator,ExpressionValue,Result).
 
-evaluate(expression(Term,Operator,Expression),VarsIn,Out):-
-	Operator=add_op,
-	evaluate(Term,VarsIn,ValueFirst),
-	evaluate(Expression,VarsIn,ValueSecond),
-	Out=ValueFirst + ValueSecond.
+evaluate(Term,Vars,Value):-
+	Term=term(Factor),
+	evaluate(Factor,Vars,Value).
 
-evaluate(term(Factor),VarsIn,VarsOut):-
-	evaluate(Factor,VarsIn,VarsOut).
+evaluate(Term,Vars,Result):-
+	Term=term(Factor,Operator,RecTerm),
+	evaluate(Factor,Vars,FactorValue),
+	evaluate(RecTerm,Vars,TermValue),
+	calc(FactorValue,Operator,TermValue,Result).
 
-evaluate(term(Factor, Operator, Term),VarsIn,Out):-
-	Operator = mult_op,
-	evaluate(Factor,VarsIn,ValueFirst),
-	evaluate(Term,VarsIn,ValueSecond),
-	Out=ValueFirst * ValueSecond.
+evaluate(Factor,Vars,Result):-
+	Factor=factor(_,Expression,_),
+	evaluate(Expression,Vars,Result).
 
-evaluate(term(Factor, Operator, Term),VarsIn,Out):-
-	Operator = div_op,
-	evaluate(Factor,VarsIn,ValueFirst),
-	evaluate(Term,VarsIn,ValueSecond),
-	Out=ValueFirst / ValueSecond.
+evaluate(Factor,_,X):-
+	Factor=factor(int(X)).
 
-evaluate(factor(Int),VarsIn,VarsOut):-
-	evaluate(Int,VarsIn,VarsOut).
+evaluate(Factor,[],0):-
+	Factor=factor(ident(Id)).
 
-evaluate(factor(Id),VarsIn,Out):-
-	find(Id,VarsIn,Out).
+evaluate(Factor,[H|VarsIn],X):-
+	Factor=factor(ident(Id)),
+	H=(Id=X).
 
-evaluate(factor(LeftParen, Expression, RightParen),VarsIn,VarsOut):-
-	evaluate(Expression,VarsIn,VarsOut).
+evaluate(Factor,[_|VarsIn],X):-
+	Factor=factor(ident(Id)),
+	evaluate(Factor,VarsIn,X).
 
-evaluate(int(Int),VarsIn,Int).
-evaluate(ident(Id),VarsIn,Out):-
-	find(Id,VarsIn,Out).
-
-find(Id,[],Id).
-find(Id,[H|T],X):-
-	H=[Id=X].
-find(Id,[_|T],X):-
-	find(Id,T,X).
-	
-	
+calc(A,sub_op,B,A-B).
+calc(A,add_op,B,A+B).
+calc(A,div_op,B,A/B).
+calc(A,mult_op,B,A*B).
 
 
+/*
+evaluate(term(factor(ident(Id))),[],0).
 
+evaluate(Term,[H|Vars],X):-
+	Term=term(factor(ident(Id)),
+	write_to_file("deb.txt",H,[a=2])
+
+evaluate(Term,[H|Vars],X):-
+	Term=term(factor(ident(Id))),
+	evaluate(Term,Vars,X).*/
 
 
 
