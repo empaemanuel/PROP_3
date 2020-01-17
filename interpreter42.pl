@@ -18,16 +18,14 @@ Load the tokenizer (tokenize/2) and the file_writer (write_to_file/3).
 /***
 The top level predicate run/2 of the solution.
 To be called like this:
-?- run('program3.txt','myparsetree3.txt').
+?- run('program2.txt','myparsetree2.txt').
 ***/
 
 run(InputFile,OutputFile):-
 	tokenize(InputFile,Program),
 	parse(ParseTree,Program,[]),
 	evaluate(ParseTree,[],VariablesOut), 
-
 	write_to_file(OutputFile,ParseTree,VariablesOut).
-	%write_to_file(OutputFile,ParseTree,[a=1111]).
 
 /***
 parse(-ParseTree)-->
@@ -181,18 +179,6 @@ calc(A,sub_op,B,A-B).
 calc(A,add_op,B,A+B).
 calc(A,div_op,B,A/B).
 calc(A,mult_op,B,A*B).
-
-
-/*
-evaluate(term(factor(ident(Id))),[],0).
-
-evaluate(Term,[H|Vars],X):-
-	Term=term(factor(ident(Id)),
-	write_to_file("deb.txt",H,[a=2])
-
-evaluate(Term,[H|Vars],X):-
-	Term=term(factor(ident(Id))),
-	evaluate(Term,Vars,X).*/
 
 
 
