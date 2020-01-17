@@ -135,31 +135,34 @@ evaluate(Statement,Vars,Vars):-
 
 evaluate(Assignment,VarsIn,[(Id=Value)|VarsIn]):-
 	Assignment=assignment(ident(Id),_,Expression,_),
-	evaluate(Expression, VarsIn, Value).
+	evaluate(Expression, VarsIn,0,add_op,Value).
 
-evaluate(Expression,Vars,Value):-
+evaluate(Expression,Vars,ParentValue,ParentOperator,Result):-
 	Expression=expression(Term),
-	evaluate(Term,Vars,Value).
+	evaluate(Term,Vars,0,add_op,TermValue),
+	calc(ParentValue,ParentOperator,TermValue,Result).
 
-evaluate(Expression,Vars,Result):-
+
+evaluate(Expression,Vars,ParentValue,ParentOperator,Result):-
 	Expression=expression(Term,Operator,RecExpression),
-	evaluate(Term,Vars,TermValue),
-	evaluate(RecExpression,Vars,ExpressionValue),
-	calc(TermValue,Operator,ExpressionValue,Result).
+	evaluate(Term,Vars,0,add_op,TermValue),
+	calc(ParentValue,ParentOperator,TermValue,SubResult),
+	evaluate(RecExpression,Vars,SubResult,Operator,Result).
 
-evaluate(Term,Vars,Value):-
+evaluate(Term,Vars,ParentValue,ParentOperator,Result):-
 	Term=term(Factor),
-	evaluate(Factor,Vars,Value).
+	evaluate(Factor,Vars,FactorValue),
+	calc(ParentValue,ParentOperator,FactorValue,Result).
 
-evaluate(Term,Vars,Result):-
+evaluate(Term,Vars,ParentValue,ParentOperator,Result):-
 	Term=term(Factor,Operator,RecTerm),
 	evaluate(Factor,Vars,FactorValue),
-	evaluate(RecTerm,Vars,TermValue),
-	calc(FactorValue,Operator,TermValue,Result).
+	calc(ParentValue,ParentOperator,FactorValue,SubResult),
+	evaluate(RecTerm,Vars,SubResult,Operator,Result).
 
 evaluate(Factor,Vars,Result):-
 	Factor=factor(_,Expression,_),
-	evaluate(Expression,Vars,Result).
+	evaluate(Expression,Vars,0,add_op,Result).
 
 evaluate(Factor,_,X):-
 	Factor=factor(int(X)).
@@ -174,6 +177,7 @@ evaluate(Factor,[H|VarsIn],X):-
 evaluate(Factor,[_|VarsIn],X):-
 	Factor=factor(ident(Id)),
 	evaluate(Factor,VarsIn,X).
+
 
 calc(A,sub_op,B,A-B).
 calc(A,add_op,B,A+B).
